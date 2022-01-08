@@ -47,7 +47,7 @@ def generate_dungeon(
 
     rooms: List[RectangularRoom] = []
 
-    for r in range(max_rooms):
+    for r in range(max_rooms): 
         room_width = random.randint(room_min_size, room_max_size)
         room_height = random.randint(room_min_size, room_max_size)
 
@@ -67,7 +67,7 @@ def generate_dungeon(
         else:
             # other rooms
             # create a tunnel between the new and the previous room
-            for x,y in tunnel_between(rooms[-1].center, new_room.center):
+            for x,y in tunnel_between(rooms[-1].center, new_room.center): # ignore: naming
                 dungeon.tiles[x,y] = tile_types.floor
         
         rooms.append(new_room)
