@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 from typing import Iterator, List, Tuple, TYPE_CHECKING
+import entity_factories
 
 import tcod
 
@@ -42,8 +43,9 @@ def generate_dungeon(
     room_min_size: int,
     room_max_size: int,
     max_rooms: int,
+    max_monsters_per_room: int,
     player: Entity) -> GameMap:
-    dungeon = GameMap(map_width, map_height)
+    dungeon = GameMap(map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
 
@@ -70,9 +72,28 @@ def generate_dungeon(
             for x,y in tunnel_between(rooms[-1].center, new_room.center): # ignore: naming
                 dungeon.tiles[x,y] = tile_types.floor
         
+        place_entities(new_room, dungeon, max_monsters_per_room)
         rooms.append(new_room)
 
     return dungeon
+
+def place_entities(
+    room: RectangularRoom,
+    dungeon: GameMap,
+    maximum_monsters: int
+) -> None:
+    number_of_monsters = random.randint(0, maximum_monsters)
+
+    for _ in range(number_of_monsters):
+        x = random.randint(room.x1 + 1, room.x2 -1)
+        y = random.randint(room.y1 + 1, room.y2 -1)
+
+        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
+            if random.random() < 0.8:
+                entity_factories.orc.spawn(dungeon, x,y)
+            else:
+                entity_factories.troll.spawn(dungeon, x,y)
+
 
 def tunnel_between(
     start: Tuple[int,int], end: Tuple[int,int]
