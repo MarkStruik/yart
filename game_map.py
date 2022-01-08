@@ -1,5 +1,8 @@
 from __future__ import annotations
-from typing import Iterable, Optional, TYPE_CHECKING
+from typing import Iterable, Iterator, Optional, TYPE_CHECKING
+
+from Engine import Engine
+from Entity import Actor
 
 if TYPE_CHECKING:
     from Entity import Entity
@@ -11,14 +14,24 @@ import tile_types
 
 class GameMap:
     """represents the gamemap"""
-    def __init__(self, width: int, height: int, entities: Iterable[Entity]) -> None:
+    def __init__(self, engine: Engine, width: int, height: int, entities: Iterable[Entity]) -> None:
         """create a new game map"""
+        self.engine = engine
         self.width, self.height = width, height
+        self.entities = set(entities)
         self.tiles = np.full((width,height), fill_value=tile_types.wall, order="F")
         
         self.visible = np.full((width,height), fill_value=False, order="F")
         self.explored = np.full((width, height), fill_value=False, order="F")
-        self.entities = set(entities)
+
+    @property
+    def actors(self) -> Iterator[Actor]:
+        """Iterate over ths maps living actors"""
+        yield from(
+            entity
+            for entity in self.entities
+            if isinstance(entity,Actor) and entity.is_alive
+        )
 
     def in_bounds(self, x: int, y:int ) -> bool:
         """Return true if x and y are inside of the bounds of this map."""
@@ -28,6 +41,13 @@ class GameMap:
         for entity in self.entities:
             if entity.blocks_movement and entity.x == location_x and entity.y == location_y:
                 return entity
+    
+    def get_actor_at_location(self, x: int, y: int) -> Optional[Actor]:
+        for actor in self.actors:
+            if actor.x == x and actor.y == y:
+                return actor
+        
+        return None
 
     def render( self, console: Console) -> None:
         """
@@ -42,7 +62,11 @@ class GameMap:
             choicelist=[self.tiles["light"], self.tiles["dark"]],
             default=tile_types.SHROUD
         )
-        for entity in self.entities:
+        entities_sorted_for_rendering = sorted(
+            self.entities, key=lambda x: x.render_order.value
+        )
+
+        for entity in entities_sorted_for_rendering:
             if self.visible[entity.x, entity.y]:
-                console.print(entity.x, entity.y, entity.char, fg=entity.color)
+                console.print(x=entity.x, y=entity.y, string=entity.char, fg=entity.color)
 

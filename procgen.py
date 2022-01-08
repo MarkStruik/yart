@@ -7,7 +7,7 @@ import entity_factories
 import tcod
 
 if TYPE_CHECKING:
-    from Entity import Entity
+    from Engine import Engine
 
 from game_map import GameMap
 import tile_types
@@ -44,8 +44,9 @@ def generate_dungeon(
     room_max_size: int,
     max_rooms: int,
     max_monsters_per_room: int,
-    player: Entity) -> GameMap:
-    dungeon = GameMap(map_width, map_height, entities=[player])
+    engine: Engine) -> GameMap:
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
 
@@ -65,7 +66,7 @@ def generate_dungeon(
         
         if len(rooms) == 0:
             # this is the first room our player starts here
-            player.x, player.y = new_room.center
+            player.place(*new_room.center, dungeon)
         else:
             # other rooms
             # create a tunnel between the new and the previous room
