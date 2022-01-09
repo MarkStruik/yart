@@ -7,6 +7,7 @@ import tcod.event
 from actions import (
     Action,
     BumpAction,
+    DropItem,
     EscapeAction,
     PickupAction,
     WaitAction
@@ -312,4 +313,4 @@ class InventoryDropHandler(InventoryEventHandler):
 
     def on_item_selected(self, item: Item) -> Optional[Action]:
         """Drop this item"""
-        return actions.DropItem(self.engine.player, item)
+        return DropItem(self.engine.player, item)
