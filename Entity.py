@@ -118,7 +118,7 @@ class Item(Entity):
         color: Tuple[int, int, int] = (255, 255, 255), 
         name: str = "<Unnamed>", 
         blocks_movement: bool = False, 
-        render_order: RenderOrder = RenderOrder.CORPSE,
+        render_order: RenderOrder = RenderOrder.ITEM,
         consumable: Consumable,
     ) -> None:
         super().__init__(parent=parent, x=x, y=y, char=char, color=color, name=name, blocks_movement=blocks_movement, render_order=render_order)

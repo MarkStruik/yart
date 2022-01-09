@@ -3,6 +3,7 @@ from components import consumable
 from components.fighter import Fighter
 from Entity import Actor, Item
 from components.inventory import Inventory
+from render_order import RenderOrder
 
 player = Actor(
     char="@",
