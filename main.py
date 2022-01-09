@@ -6,6 +6,8 @@ from tcod.libtcodpy import map_set_properties
 import copy
 import entity_factories
 import color
+import traceback
+
 from Engine import Engine
 from Entity import Entity
 from procgen import generate_dungeon
@@ -23,6 +25,7 @@ def main():
     room_min_size = 6
     max_rooms = 30
     max_monsters_per_room = 2
+    max_items_per_room = 2
 
     tileset = tcod.tileset.load_tilesheet(
         "assets/dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
@@ -38,6 +41,7 @@ def main():
         map_width= map_width, 
         map_height= map_height, 
         max_monsters_per_room=max_monsters_per_room,
+        max_items_per_room=max_items_per_room,
         engine= engine)
     engine.update_fov()        
     engine.message_log.add_message(
@@ -57,7 +61,15 @@ def main():
             root_console.clear()
             engine.event_handler.on_render(console=root_console)
             context.present(root_console)
-            engine.event_handler.handle_events(context)
+
+            try:
+                for event in tcod.event.wait():
+                    context.convert_event(event)
+                    engine.event_handler.handle_events(event)
+            except Exception:
+                traceback.print_exc()
+                engine.message_log.add_message(traceback.format_exc(), color.error)
+            
 
 
 if __name__ == "__main__":

@@ -1,10 +1,13 @@
 from __future__ import annotations
+
+from numpy import invert
 import color
+import exceptions
 from typing import Optional, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Engine import Engine
-    from Entity import Actor,Entity
+    from Entity import Actor,Entity, Item
 
 class Action:
     def __init__(self, entity: Actor) -> None:
@@ -65,11 +68,11 @@ class MovementAction(ActionWitghDirection):
         dest_x, dest_y = self.dest_xy
 
         if not self.engine.game_map.in_bounds(dest_x, dest_y):
-            return #destination is out of bounds
+            raise exceptions.Impossible("That way is blocked.")
         if not self.engine.game_map.tiles["walkable"][dest_x,dest_y]:
-            return #destination is blocked by non walkable tile
+            raise exceptions.Impossible("That way is blocked.")
         if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y):
-            return # destination is blocked by an entity
+            raise exceptions.Impossible("That way is blocked.") #destination is blocked by an entity
 
         self.entity.move(self.dx, self.dy)
 
@@ -77,7 +80,7 @@ class MeleeAction(ActionWitghDirection):
     def perform(self) -> None:
         target = self.target_actor
         if not target:
-            return # nothing to see here :)
+            raise exceptions.Impossible("Nothing to attack")
 
         if self.target_actor is self.engine.player:
             attack_color = color.player_atk
@@ -102,4 +105,49 @@ class BumpAction(ActionWitghDirection):
         else:
             return MovementAction(self.entity, self.dx, self.dy).perform()
 
-       
+class ItemAction(Action):
+    def __init__(self, entity: Actor, item: Item, target_xy: Optional[Tuple[int,int]] = None) -> None:
+        super().__init__(entity)
+
+        self.item = item      
+        if not target_xy:
+            target_xy = entity.x, entity.y # self targeted
+        self.target_xy = target_xy
+
+    @property
+    def target_actor(self) -> Optional[Actor]:
+        """Return the actor at this actiosn destination."""
+        return self.engine.game_map.get_actor_at_location(*self.target_xy)
+
+    def perform(self) -> None:
+        """Invoke the items ability, this action will be given to provide context"""
+        self.item.consumable.activate(self)
+
+class PickupAction(Action):
+    """Pickup an item an dadd it to the inventory, if there is room for it"""
+
+    def __init__(self, entity: Actor) -> None:
+        super().__init__(entity)
+
+    def perform(self) -> None:
+        actor_location_x = self.entity.x
+        actor_location_y = self.entity.y
+        inventory = self.entity.inventory
+
+        for item in self.entity.gamemap.items:
+            if actor_location_x == item.x and actor_location_y == item.y:
+                if len(inventory.items) >= inventory.capacity:
+                    raise exceptions.Impossible("Your inventory is full")
+                
+                self.engine.game_map.entities.remove(item)
+                item.parent = self.entity.inventory
+                inventory.items.append(item)
+
+                self.engine.message_log.add_message(f"You picked up the {item.name}!")
+                return
+
+        raise exceptions.Impossible("There is nothing here to pick up")
+
+class DropItem(ItemAction):
+    def perform(self) -> None:
+        self.entity.inventory.drop(self.item)

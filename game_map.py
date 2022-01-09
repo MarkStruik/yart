@@ -2,10 +2,9 @@ from __future__ import annotations
 from typing import Iterable, Iterator, Optional, TYPE_CHECKING
 
 from Engine import Engine
-from Entity import Actor
-
+from Entity import Actor, Item
 if TYPE_CHECKING:
-    from Entity import Entity
+    from Entity import Actor, Item 
 
 import numpy as np # type: ignore
 from tcod.console import Console
@@ -25,6 +24,10 @@ class GameMap:
         self.explored = np.full((width, height), fill_value=False, order="F")
 
     @property
+    def gamemap(self) -> GameMap:
+        return self
+
+    @property
     def actors(self) -> Iterator[Actor]:
         """Iterate over ths maps living actors"""
         yield from(
@@ -32,6 +35,10 @@ class GameMap:
             for entity in self.entities
             if isinstance(entity,Actor) and entity.is_alive
         )
+
+    @property
+    def items(self) -> Iterator[Item]:
+        yield from (entity for entity in self.entities if isinstance(entity,Item))
 
     def in_bounds(self, x: int, y:int ) -> bool:
         """Return true if x and y are inside of the bounds of this map."""
