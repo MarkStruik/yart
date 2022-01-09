@@ -102,6 +102,11 @@ class MainGameEventHandler(EventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[Action]:
         action: Optional[Action] = None
 
+        #just to make sure
+        if self.engine.player.fighter.hp <= 0:
+            self.engine.event_handler = GameOverEventHandler(self.engine)
+            return None
+
         player = self.engine.player
         key = event.sym
 
